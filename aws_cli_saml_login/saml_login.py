@@ -22,11 +22,11 @@ from urllib.parse import urlparse
 region = 'us-east-1'
 
 # output format: The AWS CLI output format that will be configured in the
-# saml profile (affects subsequent CLI calls)
+# current profile (set by 'AWS_PROFILE' variable) or saml profile (affects subsequent CLI calls)
 outputformat = 'json'
 
 # awsconfigfile: The file where this script will store the temp
-# credentials under the saml profile
+# credentials under the current profile (set by 'AWS_PROFILE' variable) or saml profile
 awsconfigfile = '/.aws/credentials'
 
 # SSL certificate verification: Whether or not strict certificate
@@ -42,6 +42,8 @@ logging.basicConfig(level=logging.INFO)
 def main():
     # idpentryurl: The initial url that starts the authentication process.
     idpentryurl = os.environ.get('IDP_ENTRY_URL')
+
+    profile = os.environ.get('AWS_PROFILE', 'saml')
 
     # Get the IDP entry URL if environment variable is not set
     if idpentryurl is None:
@@ -187,16 +189,15 @@ def main():
     config = configparser.RawConfigParser()
     config.read(filename)
 
-    # Put the credentials into a saml specific section instead of clobbering
+    # Put the credentials into a specific section instead of clobbering
     # the default credentials
-    if not config.has_section('saml'):
-        config.add_section('saml')
+    if not config.has_section(profile):
+        config.add_section(profile)
 
-    config.set('saml', 'output', outputformat)
-    config.set('saml', 'region', region)
-    config.set('saml', 'aws_access_key_id', token['Credentials']['AccessKeyId'])
-    config.set('saml', 'aws_secret_access_key', token['Credentials']['SecretAccessKey'])
-    config.set('saml', 'aws_session_token', token['Credentials']['SessionToken'])
+    config.set(profile, 'output', outputformat)
+    config.set(profile, 'aws_access_key_id', token['Credentials']['AccessKeyId'])
+    config.set(profile, 'aws_secret_access_key', token['Credentials']['SecretAccessKey'])
+    config.set(profile, 'aws_session_token', token['Credentials']['SessionToken'])
 
     # Write the updated config file
     with open(filename, 'w+') as configfile:
@@ -204,7 +205,7 @@ def main():
 
     # Give the user some basic info as to what has just happened
     print('----------------------------------------------------------------')
-    print('Your new access key pair has been stored in the AWS configuration file {0} under the saml profile.'.format(filename))
+    print('Your new access key pair has been stored in the AWS configuration file {0} under the current profile or saml profile.'.format(filename))
     print('Note that it will expire at {0}.'.format(token['Credentials']['Expiration']))
     print('After this time, you may safely rerun this script to refresh your access key pair.')
     print('To use this credential, call the AWS CLI with the --profile option (e.g. aws --profile saml ec2 describe-instances).')

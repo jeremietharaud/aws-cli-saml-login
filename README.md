@@ -31,4 +31,7 @@ pip install git+git://github.com/jeremietharaud/aws-cli-saml-login.git
 
 When you launch `aws-cli-saml-login`, you will prompted the IDP entry url, your username and your password.
 
+By default, the new access key pair is stored into a section named `saml` on `/.aws/credentials` file.
+To store it in a specific profile, set the environment variable `AWS_PROFILE`.
+
 If you don't want to type the IDP url each time, create an environment variable named `IDP_ENTRY_URL`.
